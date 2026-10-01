@@ -11,23 +11,33 @@ canonical_columns:
   src_account:
     - "Sender_Account"
     - "sender_account"
+    - "Source_Account"
+    - "source_account"
     - "src_account"
     - "from_account"
     - "remitter_account"
+    - "Debit_Account"
   dst_account:
     - "Receiver_Account"
     - "receiver_account"
+    - "Destination_Account"
+    - "destination_account"
     - "dst_account"
     - "to_account"
     - "beneficiary_account"
+    - "Credit_Account"
   src_ifsc:
     - "Sender_IFSC"
     - "sender_ifsc"
+    - "Source_IFSC"
+    - "source_ifsc"
     - "src_ifsc"
     - "remitter_ifsc"
   dst_ifsc:
     - "Receiver_IFSC"
     - "receiver_ifsc"
+    - "Destination_IFSC"
+    - "destination_ifsc"
     - "dst_ifsc"
     - "beneficiary_ifsc"
   amount:

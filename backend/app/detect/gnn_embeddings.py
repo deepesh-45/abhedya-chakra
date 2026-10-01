@@ -29,6 +29,9 @@ class DeepGraphEmbeddings:
         on the directed transition matrix.
         Captures global community and ring clustering structure.
         """
+        if num_nodes <= 1:
+            return np.zeros((num_nodes, self.embedding_dim), dtype=np.float32)
+
         # Build scipy CSR sparse matrix
         adj = sp.csr_matrix((weights, (src_ids, dst_ids)), shape=(num_nodes, num_nodes), dtype=np.float32)
 
@@ -39,8 +42,14 @@ class DeepGraphEmbeddings:
         norm_adj = d_inv.dot(adj)
 
         # Truncated SVD embedding (captures low-rank latent graph geometry)
-        svd = TruncatedSVD(n_components=self.embedding_dim, random_state=42, algorithm='randomized')
+        n_comp = min(self.embedding_dim, max(1, num_nodes - 1))
+        svd = TruncatedSVD(n_components=n_comp, random_state=42, algorithm='randomized')
         embeddings = svd.fit_transform(norm_adj)
+
+        if n_comp < self.embedding_dim:
+            pad = np.zeros((num_nodes, self.embedding_dim - n_comp), dtype=np.float32)
+            embeddings = np.hstack([embeddings, pad])
+
         return embeddings.astype(np.float32)
 
     def compute_pagerank(self, num_nodes: int, src_ids: np.ndarray, dst_ids: np.ndarray, alpha: float = 0.85, max_iter: int = 25) -> np.ndarray:

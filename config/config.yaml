@@ -1,8 +1,8 @@
-# Operation "Abhedya-Chakra" Configuration
+# Operation "Vajra" Configuration
 # All thresholds, weights, and detection parameters
 
 app:
-  name: "Abhedya-Chakra"
+  name: "Operation Vajra"
   version: "1.0.0"
   debug: false
   host: "127.0.0.1"

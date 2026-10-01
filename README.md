@@ -1,5 +1,5 @@
-# Operation "Abhedya-Chakra"
-### Offline Mule-Ring Detection, Multi-Hop Taint Tracking & Automated Case Generation Engine
+# Operation "Vajra" (वज्र)
+### Offline Money Mule Detection, Money Trail Tracing & Automated Case Generation Engine
 **Void Hacks() 8.0 — Theme: Abhedya (Cyber Security & Digital Forensics)**  
 *In association with Indore Police Commissionerate*
 
@@ -9,7 +9,7 @@
 
 Financial cyber-fraud syndicates (digital arrests, fake task schemes, Ponzi bots, and illegal loan apps) launder stolen capital across multi-tier money mule account networks within minutes. When law enforcement agencies receive bulk multi-bank exports containing millions of rows, traditional spreadsheets crash and standard relational databases take hours to compute multi-hop transfers.
 
-**Abhedya-Chakra** is a high-throughput, locally deployable digital forensics analytics workbench designed for the Indore Police Commissionerate. It operates **100% offline (air-gapped)**, ingests **2,000,000 transactions in 2.72 seconds**, executes **4-hop money traces in 0.54 milliseconds**, flags mule rings using **ML & GNN models**, and generates **court-ready legal notices with zero hallucination**.
+**Operation Vajra** is a high-throughput, locally deployable digital forensics analytics workbench designed for the Indore Police Commissionerate. It operates **100% offline (air-gapped)**, ingests **2,000,000 transactions in 2.72 seconds**, executes **4-hop money traces in 0.10 - 0.44 milliseconds**, flags mule rings using **explainable rules & machine learning models**, and generates **court-ready legal notices (in English and Hindi) with zero hallucination**.
 
 ---
 
@@ -66,18 +66,18 @@ All models are trained offline and bundled under `ml/models/`:
 
 ## 5. Core Modules
 
-* **Module A — High-Throughput Ingestion ([loader.py](backend/app/ingest/loader.py))**:
-  * Parallel zero-copy DuckDB ingestion with streaming SHA-256 and dictionary-encoded dense IDs.
-* **Module B — In-Memory Graph Engine ([csr.py](backend/app/graph/csr.py))**:
+* **Module A — Dynamic Column Ingestion ([loader.py](backend/app/ingest/loader.py))**:
+  * Parallel zero-copy DuckDB ingestion with streaming SHA-256 and automated column alias mapping ([schema_map.yaml](config/schema_map.yaml)).
+* **Module B — Sub-Millisecond Graph Engine ([csr.py](backend/app/graph/csr.py))**:
   * Compressed Sparse Row (CSR) representation of 2,000,000 edges (~80 MB RAM footprint).
-  * Time-respecting FIFO Taint Tracking calculating exact recoverable balances.
-* **Module C — Interactive Investigation UI ([frontend/](frontend/))**:
-  * High-DPI Canvas visualizer mapping Victim $\rightarrow$ L1 Collector $\rightarrow$ L2 Distributor $\rightarrow$ L3 Terminal.
+  * Time-respecting FIFO Taint Tracking calculating exact recoverable stolen funds.
+* **Module C — Interactive Investigation Workbench ([frontend/](frontend/))**:
+  * High-performance Canvas visualizer mapping Victim $\rightarrow$ L1 Initial Receiver $\rightarrow$ L2 Money Splitter $\rightarrow$ L3 Cash-Out / Destination.
   * Minute-level Temporal Playback Slider with 1x, 2x, 5x speed controls.
   * 1-Click Subgraph Isolation and CSV Export.
-* **Module D — Automated Case Officer & Legal Notice Generator ([legal_generator.py](backend/app/reports/legal_generator.py))**:
+* **Module D — Statutory Legal Notice Generator ([legal_generator.py](backend/app/reports/legal_generator.py))**:
   * Chronological Police Case Diary (Section 172 CrPC / Section 192 BNSS 2023).
-  * Statutory Bank Freeze Requisition Orders (Section 94 & Section 106 BNSS 2023).
+  * Statutory Bank Freeze Requisition Orders in **English and हिन्दी** (Section 94 & Section 106 BNSS 2023).
   * Anti-Hallucination Verifier ([verifier.py](backend/app/ai/verifier.py)) that programmatically blocks any entity not verified in the database.
 
 ---
