@@ -27,6 +27,12 @@ export const App: React.FC = () => {
     loadOverview();
   }, []);
 
+  const handleSelectPreset = (preset: any) => {
+    loadOverview();
+    setSelectedVictim(preset.default_victim);
+    setActiveTab('investigate');
+  };
+
   const handleSelectVictim = (victim: string) => {
     setSelectedVictim(victim);
     setActiveTab('investigate');
@@ -46,6 +52,7 @@ export const App: React.FC = () => {
         datasetName={overviewData?.dataset_name}
         totalTransactions={overviewData?.total_transactions}
         onDatasetReload={loadOverview}
+        onSelectPreset={handleSelectPreset}
       />
 
       <main style={{ flex: 1 }}>
@@ -60,6 +67,7 @@ export const App: React.FC = () => {
           <InvestigateTab
             initialVictim={selectedVictim}
             onNavigateToLegal={handleNavigateToLegal}
+            onDatasetChange={loadOverview}
           />
         )}
 

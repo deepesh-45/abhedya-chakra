@@ -130,15 +130,87 @@ def overview():
         "telemetry": telemetry.get_system_stats()
     }
 
+@app.get("/api/datasets")
+def list_available_datasets():
+    """Returns curated synthetic and benchmark datasets with victim accounts for quick testing."""
+    datasets = [
+        {
+            "id": "scenario_4_mega",
+            "name": "Scenario 4: Mega Capacity Limit Test (511 Nodes / 1,650 Flows)",
+            "category": "Stress Test (Max Capacity)",
+            "filepath": "data/synthetic/scenario_4_mega_capacity_stress_test_500nodes.csv",
+            "default_victim": "SBIN10005001",
+            "description": "Exceeds PRD maximum capacity limit (500+ nodes, 1,500+ flows). Simulates complex multi-hop layering of ₹5,00,00,000 across 5 layers with 60 FPS zero-lag canvas rendering.",
+            "loss_amount": "₹5,00,00,000",
+            "nodes": 511,
+            "edges": 1650,
+            "badge": "500+ Nodes · 1,650 Flows"
+        },
+        {
+            "id": "scenario_1_smurfing",
+            "name": "Scenario 1: Fast Smurfing Syndicate (IEEE Mobile AML)",
+            "category": "Synthetic Scenario",
+            "filepath": "data/synthetic/scenario_1_fast_smurfing.csv",
+            "default_victim": "SBIN10009901",
+            "description": "Rapid micro-structuring under ₹50,000 threshold within 15-minute bursts across UPI/IMPS gateways.",
+            "loss_amount": "₹15,00,000",
+            "nodes": 267,
+            "edges": 553,
+            "badge": "IEEE Mobile AML"
+        },
+        {
+            "id": "scenario_2_investment",
+            "name": "Scenario 2: Investment Scam Pooling (IBM Watson)",
+            "category": "Synthetic Scenario",
+            "filepath": "data/synthetic/scenario_2_investment_scam.csv",
+            "default_victim": "SBIN10008000",
+            "description": "Multi-victim aggregation into aggregator mule accounts followed by immediate merchant cashouts.",
+            "loss_amount": "₹25,00,000",
+            "nodes": 357,
+            "edges": 1057,
+            "badge": "IBM Watson AML"
+        },
+        {
+            "id": "scenario_3_cyclic",
+            "name": "Scenario 3: Cyclic Laundering & Churn Ring (Nature 2025)",
+            "category": "Synthetic Scenario",
+            "filepath": "data/synthetic/scenario_3_cyclic_ring.csv",
+            "default_victim": "AXIS10007701",
+            "description": "Circular fund routing through nested 3-hop cycles before funnelling into crypto P2P cashout mules.",
+            "loss_amount": "₹18,00,000",
+            "nodes": 263,
+            "edges": 605,
+            "badge": "Nature Sci Rep 2025"
+        },
+        {
+            "id": "benchmark_2m",
+            "name": "VoidHacks 2M Production Benchmark",
+            "category": "Production Dataset",
+            "filepath": "VoidHacks8_MuleAccount_2M_Transactions.csv",
+            "default_victim": "AIRP10000024",
+            "description": "Full 2,000,000 transaction dataset provided by Void Hacks 8.0 / Indore Police with 24,873 accounts.",
+            "loss_amount": "₹10,00,000+",
+            "nodes": 24873,
+            "edges": 2000000,
+            "badge": "2,000,000 Transactions"
+        }
+    ]
+    return {"datasets": datasets}
+
 class IngestPathRequest(BaseModel):
     filepath: str
 
 @app.post("/api/ingest")
 def ingest_file_path(req: IngestPathRequest):
     from backend.app.ingest.loader import ingest_engine
-    if not os.path.exists(req.filepath):
+    target = Path(req.filepath)
+    if not target.exists():
+        from backend.app.core.config import ROOT_DIR
+        target = ROOT_DIR / req.filepath
+
+    if not target.exists():
         raise HTTPException(status_code=404, detail=f"File {req.filepath} not found on server.")
-    stats = ingest_engine.ingest_csv(req.filepath)
+    stats = ingest_engine.ingest_csv(str(target))
     return stats
 
 @app.post("/api/ingest/upload")

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Sparkles } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Sparkles, Scan, Maximize2, Minimize2 } from 'lucide-react';
 import type { NodeData, EdgeData } from '../types';
 
 interface GraphCanvasProps {
@@ -57,8 +57,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return ids;
   }, [nodes, visibleEdges]);
 
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
   // High-density layout calculation with multi-column bands for large node counts
-  const nodePositions = useMemo(() => {
+  const { nodePositions, bounds } = useMemo(() => {
     const positions = new Map<string, { x: number; y: number; r: number }>();
     const hopGroups: Record<number, NodeData[]> = { 0: [], 1: [], 2: [], 3: [], 4: [] };
 
@@ -68,42 +70,90 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       hopGroups[hop].push(n);
     });
 
-    const baseWidth = 980;
-    const baseHeight = 540;
+    const isLargeGraph = nodes.length > 150;
+    const baseWidth = isLargeGraph ? 1300 : 980;
+    const baseHeight = isLargeGraph ? 700 : 540;
     const layerSpacing = baseWidth / 4.4;
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
     [0, 1, 2, 3, 4].forEach(hop => {
       const group = hopGroups[hop];
       if (!group || group.length === 0) return;
 
-      const baseX = 80 + hop * layerSpacing;
+      const baseX = 90 + hop * layerSpacing;
       const count = group.length;
 
-      // If dense layer (e.g. > 10 nodes), distribute into sub-columns to prevent vertical stacking
-      const subCols = Math.max(1, Math.min(6, Math.ceil(count / 14)));
-      const colWidth = subCols > 1 ? 50 : 0;
+      // In dense layers (e.g. 500+ nodes in stress test), distribute into up to 10 sub-columns
+      const maxCols = isLargeGraph ? 10 : 6;
+      const subCols = Math.max(1, Math.min(maxCols, Math.ceil(count / (isLargeGraph ? 16 : 14))));
+      const colWidth = subCols > 1 ? (isLargeGraph ? 42 : 50) : 0;
       const itemsPerCol = Math.ceil(count / subCols);
-      const rowSpacing = Math.max(26, Math.min(65, (baseHeight - 80) / Math.max(itemsPerCol, 1)));
+      const rowSpacing = Math.max(isLargeGraph ? 20 : 26, Math.min(65, (baseHeight - 80) / Math.max(itemsPerCol, 1)));
 
       group.forEach((node, idx) => {
         const colIdx = idx % subCols;
         const rowIdx = Math.floor(idx / subCols);
         const x = baseX + (colIdx - (subCols - 1) / 2) * colWidth;
-        const y = 60 + (rowIdx + 0.5) * rowSpacing + ((colIdx % 2) * (rowSpacing * 0.25));
+        const y = 65 + (rowIdx + 0.5) * rowSpacing + ((colIdx % 2) * (rowSpacing * 0.25));
 
         // Node radius dynamically sized by held amount or volume
-        let r = 12;
-        if (hop === 0) r = 18; // Victim
-        else if (node.held_paise > 10000000) r = 18; // > ₹1 Lakh
-        else if (node.held_paise > 1000000) r = 15; // > ₹10,000
-        else r = 11;
+        let r = isLargeGraph ? 9 : 12;
+        if (hop === 0) r = isLargeGraph ? 15 : 18; // Victim
+        else if (node.held_paise > 10000000) r = isLargeGraph ? 14 : 18; // > ₹1 Lakh
+        else if (node.held_paise > 1000000) r = isLargeGraph ? 12 : 15; // > ₹10,000
+        else r = isLargeGraph ? 8.5 : 11;
 
         positions.set(node.acct_no, { x, y, r });
+
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
       });
     });
 
-    return positions;
+    return {
+      nodePositions: positions,
+      bounds: {
+        minX: isFinite(minX) ? minX : 0,
+        maxX: isFinite(maxX) ? maxX : 1000,
+        minY: isFinite(minY) ? minY : 0,
+        maxY: isFinite(maxY) ? maxY : 600
+      }
+    };
   }, [nodes]);
+
+  // Auto-fit function to center and frame all nodes
+  const fitToView = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || nodes.length === 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const graphWidth = (bounds.maxX - bounds.minX) + 120;
+    const graphHeight = (bounds.maxY - bounds.minY) + 120;
+
+    const scaleX = rect.width / graphWidth;
+    const scaleY = rect.height / graphHeight;
+    const fitZoom = Math.max(0.2, Math.min(1.2, Math.min(scaleX, scaleY) * 0.92));
+
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+
+    setZoom(fitZoom);
+    setPan({
+      x: rect.width / 2 - centerX * fitZoom,
+      y: rect.height / 2 - centerY * fitZoom
+    });
+  };
+
+  // Auto-fit on dataset/nodes change
+  useEffect(() => {
+    if (nodes.length > 0) {
+      // Short delay to ensure canvas rect is ready
+      const timer = setTimeout(fitToView, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [nodes.length]);
 
   // Canvas redraw on animation, pan, zoom, nodes, edges
   useEffect(() => {
@@ -153,26 +203,31 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       'VICTIM COMPLAINT',
       'L1 INITIAL RECEIVER',
       'L2 MONEY SPLITTER',
-      'L3 CASH-OUT / DESTINATION'
+      'L3 MULE DISTRIBUTOR',
+      'L4 CASH-OUT / DESTINATION'
     ];
-    const layerSpacing = 980 / 4.4;
+    const isLargeGraph = nodes.length > 150;
+    const baseWidth = isLargeGraph ? 1300 : 980;
+    const layerSpacing = baseWidth / 4.4;
     ctx.font = '700 11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#94A3B8';
     layerTitles.forEach((title, idx) => {
-      const lx = 80 + idx * layerSpacing;
+      const lx = 90 + idx * layerSpacing;
       ctx.fillText(title, lx, 30);
     });
 
     // 3. Batch Draw Edges
-    visibleEdges.forEach(edge => {
+    const isDenseGraph = visibleEdges.length > 300;
+
+    visibleEdges.forEach((edge, edgeIdx) => {
       const p1 = nodePositions.get(edge.src_acct);
       const p2 = nodePositions.get(edge.dst_acct);
       if (!p1 || !p2) return;
 
       const isTainted = edge.taint_paise > 0;
       ctx.beginPath();
-      ctx.strokeStyle = isTainted ? '#DC2626' : '#94A3B8';
+      ctx.strokeStyle = isTainted ? '#DC2626' : '#CBD5E1';
       ctx.lineWidth = Math.min(5, Math.max(1.2, Math.log10(Math.max(10, edge.amount_paise / 1000)))) / Math.sqrt(zoom);
 
       // Smooth Cubic Bezier Curve
@@ -182,8 +237,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       ctx.stroke();
 
       // Flow particle pulse along the bezier curve
-      if (isTainted) {
-        const t = (animTime + (edge.amount_paise % 100) / 100) % 1.0;
+      // For dense graphs (>300 edges), throttle particle density to keep 60 FPS
+      const showParticle = isTainted && (!isDenseGraph || edgeIdx % 3 === 0 || edge.taint_paise > 5000000);
+      if (showParticle) {
+        const t = (animTime + ((edgeIdx * 17) % 100) / 100) % 1.0;
         const u = 1 - t;
         const tt = t * t;
         const uu = u * u;
@@ -192,7 +249,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
         ctx.fillStyle = '#EF4444';
         ctx.beginPath();
-        ctx.arc(px, py, 3.5 / Math.sqrt(zoom), 0, Math.PI * 2);
+        ctx.arc(px, py, (isLargeGraph ? 2.5 : 3.5) / Math.sqrt(zoom), 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -379,12 +436,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       style={{
         position: 'relative',
         width: '100%',
-        height: '540px',
+        height: isExpanded ? '780px' : '560px',
         borderRadius: '12px',
         border: '1px solid var(--border)',
         overflow: 'hidden',
         background: '#FFFFFF',
-        userSelect: 'none'
+        userSelect: 'none',
+        transition: 'height 0.25s ease'
       }}
     >
       <canvas
@@ -418,6 +476,26 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         backdropFilter: 'blur(4px)'
       }}>
         <button
+          onClick={fitToView}
+          title="Fit All Nodes in View"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '5px 8px',
+            borderRadius: '4px',
+            border: '1px solid var(--border)',
+            backgroundColor: '#FFFFFF',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: 'var(--text)'
+          }}
+        >
+          <Scan size={14} color="var(--primary)" />
+          <span>Fit View</span>
+        </button>
+
+        <button
           onClick={handleZoomIn}
           title="Zoom In"
           style={{ padding: '6px', borderRadius: '4px', border: '1px solid var(--border)', backgroundColor: '#FFFFFF' }}
@@ -433,13 +511,38 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         </button>
         <button
           onClick={handleReset}
-          title="Reset View"
+          title="Reset to 100%"
           style={{ padding: '6px', borderRadius: '4px', border: '1px solid var(--border)', backgroundColor: '#FFFFFF' }}
         >
           <RotateCcw size={14} color="var(--text)" />
         </button>
+
         <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', margin: '0 4px' }} />
-        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>
+
+        <button
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+            setTimeout(fitToView, 100);
+          }}
+          title={isExpanded ? "Collapse Canvas" : "Expand Full View (780px)"}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '5px 8px',
+            borderRadius: '4px',
+            border: '1px solid var(--border)',
+            backgroundColor: isExpanded ? 'var(--primary-light)' : '#FFFFFF',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: isExpanded ? 'var(--primary)' : 'var(--text)'
+          }}
+        >
+          {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
+        </button>
+
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginLeft: '4px' }}>
           {Math.round(zoom * 100)}%
         </span>
       </div>

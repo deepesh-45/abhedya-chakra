@@ -155,7 +155,7 @@ class CSRGraph:
 
         # Calculate initial victim loss
         initial_loss_paise = int(np.sum(self.edge_amounts_paise[victim_edges_idx]))
-        min_prune_paise = int(initial_loss_paise * min_amount_fraction)
+        min_prune_paise = min(int(initial_loss_paise * min_amount_fraction), 100000) # Cap at ₹1,000 so micro-smurfing isn't pruned
 
         # BFS state
         # frontier: dict of acct_id -> list of lots [(amount_paise, arrival_ts)]

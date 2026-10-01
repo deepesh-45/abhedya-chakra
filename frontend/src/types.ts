@@ -78,3 +78,16 @@ export interface OverviewData {
   models_status?: Record<string, any>;
   telemetry: SystemStats;
 }
+
+export interface DatasetPreset {
+  id: string;
+  name: string;
+  category: string;
+  filepath: string;
+  default_victim: string;
+  description: string;
+  loss_amount: string;
+  nodes: number;
+  edges: number;
+  badge: string;
+}

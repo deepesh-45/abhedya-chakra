@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Pause, RotateCcw, Download, ArrowRight } from 'lucide-react';
+import { Search, Play, Pause, RotateCcw, Download, ArrowRight, Zap, Layers, Sparkles, CheckCircle2 } from 'lucide-react';
 import type { TraceResponse, NodeData, FreezeRecommendation, EdgeData } from '../types';
 import { GraphCanvas } from './GraphCanvas';
 
 interface InvestigateTabProps {
   initialVictim: string;
   onNavigateToLegal: (victim: string) => void;
+  onDatasetChange?: () => void;
 }
 
-export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, onNavigateToLegal }) => {
+export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, onNavigateToLegal, onDatasetChange }) => {
   const [victimInput, setVictimInput] = useState(initialVictim || 'AIRP10000024');
   const [traceData, setTraceData] = useState<TraceResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [switchingDataset, setSwitchingDataset] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Selected Node Drawer
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
@@ -24,6 +27,76 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
   const [currentTs, setCurrentTs] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+
+  const presets = [
+    {
+      id: 'scenario_4_mega',
+      name: 'Scenario 4: Mega Capacity Limit Test',
+      victim: 'SBIN10005001',
+      path: 'data/synthetic/scenario_4_mega_capacity_stress_test_500nodes.csv',
+      badge: '511 Nodes · 1,650 Flows',
+      loss: '₹5 Crore',
+      isStress: true
+    },
+    {
+      id: 'scenario_1_smurfing',
+      name: 'Scenario 1: Fast Smurfing',
+      victim: 'SBIN10009901',
+      path: 'data/synthetic/scenario_1_fast_smurfing.csv',
+      badge: '267 Nodes · IEEE AML',
+      loss: '₹15 Lakh',
+      isStress: false
+    },
+    {
+      id: 'scenario_2_investment',
+      name: 'Scenario 2: Investment Scam',
+      victim: 'SBIN10008000',
+      path: 'data/synthetic/scenario_2_investment_scam.csv',
+      badge: '357 Nodes · IBM Watson',
+      loss: '₹25 Lakh',
+      isStress: false
+    },
+    {
+      id: 'scenario_3_cyclic',
+      name: 'Scenario 3: Cyclic Laundering',
+      victim: 'AXIS10007701',
+      path: 'data/synthetic/scenario_3_cyclic_ring.csv',
+      badge: '263 Nodes · Nature 2025',
+      loss: '₹18 Lakh',
+      isStress: false
+    },
+    {
+      id: 'benchmark_2m',
+      name: 'VoidHacks 2M Production',
+      victim: 'AIRP10000024',
+      path: 'VoidHacks8_MuleAccount_2M_Transactions.csv',
+      badge: '2M Txns · Benchmark',
+      loss: '₹10 Lakh+',
+      isStress: false
+    }
+  ];
+
+  const handleSelectScenario = async (p: typeof presets[0]) => {
+    setSwitchingDataset(true);
+    setStatusMessage(`Loading ${p.name}...`);
+    try {
+      const resp = await fetch('http://127.0.0.1:8000/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filepath: p.path })
+      });
+      if (!resp.ok) throw new Error('Failed to load dataset scenario');
+      setStatusMessage(`${p.name} loaded! Tracing money trail...`);
+      setVictimInput(p.victim);
+      if (onDatasetChange) onDatasetChange();
+      await fetchTrace(p.victim);
+      setStatusMessage(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSwitchingDataset(false);
+    }
+  };
 
   const fetchTrace = async (acct: string) => {
     setLoading(true);
@@ -111,7 +184,92 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
   };
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1440px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '1440px', margin: '0 auto' }}>
+      {/* Quick Test Scenarios & Capacity Stress Test Switcher Bar */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '10px',
+        padding: '14px 18px',
+        border: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Zap size={16} color="var(--primary)" />
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>
+              1-Click Dataset Scenarios & Graph Capacity Limits:
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              (Select below to test multi-hop rings and maximum scale without UI lag)
+            </span>
+          </div>
+          {statusMessage && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--primary)',
+              backgroundColor: 'var(--primary-light)',
+              padding: '4px 10px',
+              borderRadius: '6px'
+            }}>
+              <CheckCircle2 size={14} />
+              <span>{statusMessage}</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {presets.map(p => {
+            const isSelected = victimInput === p.victim;
+            return (
+              <button
+                key={p.id}
+                onClick={() => handleSelectScenario(p)}
+                disabled={switchingDataset || loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: p.isStress
+                    ? (isSelected ? '#1D4ED8' : '#EFF6FF')
+                    : (isSelected ? 'var(--primary)' : 'var(--surface-2)'),
+                  color: p.isStress
+                    ? (isSelected ? '#FFFFFF' : 'var(--primary)')
+                    : (isSelected ? '#FFFFFF' : 'var(--text)'),
+                  border: p.isStress
+                    ? '1.5px solid var(--primary)'
+                    : (isSelected ? '1px solid var(--primary)' : '1px solid var(--border)'),
+                  fontSize: '12px',
+                  fontWeight: isSelected || p.isStress ? 700 : 500,
+                  cursor: switchingDataset ? 'wait' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: p.isStress && !isSelected ? '0 1px 3px rgba(37,99,235,0.15)' : 'none'
+                }}
+              >
+                {p.isStress ? <Sparkles size={14} /> : <Layers size={14} />}
+                <span>{p.name}</span>
+                <span style={{
+                  fontSize: '10px',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : '#E2E8F0',
+                  color: isSelected ? '#FFFFFF' : 'var(--text-muted)'
+                }}>
+                  {p.badge}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Search Header Bar */}
       <div style={{
         backgroundColor: '#FFFFFF',
