@@ -67,6 +67,8 @@ export interface SystemStats {
 }
 
 export interface OverviewData {
+  dataset_name?: string;
+  dataset_sha256?: string;
   total_transactions: number;
   total_accounts: number;
   tier_distribution: Record<string, number>;

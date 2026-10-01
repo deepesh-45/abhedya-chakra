@@ -174,7 +174,7 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
               }}
             >
               <Download size={14} />
-              <span>Export Subgraph CSV</span>
+              <span>Export Money Trail CSV</span>
             </button>
             <button
               onClick={() => onNavigateToLegal(traceData.victim_account)}
@@ -338,15 +338,15 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--layer-1)' }} />
-                    <span>L1 Collector</span>
+                    <span>L1 Initial Receiver</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--layer-2)' }} />
-                    <span>L2 Distributor</span>
+                    <span>L2 Money Splitter</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--layer-3)' }} />
-                    <span>L3 Terminal</span>
+                    <span>L3 Cash-Out / Destination</span>
                   </div>
                 </div>
                 <span style={{ color: 'var(--text-muted)' }}>Click any node to inspect account details</span>
@@ -428,7 +428,7 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
             )}
           </div>
 
-          {/* Statutory Freeze Recommendations Table */}
+          {/* Recommended Freeze Targets Table */}
           <div style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '10px',
@@ -441,10 +441,10 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
-                  Statutory Freeze Recommendations (Ranked by Recoverable Amount)
+                  Recommended Accounts to Freeze (Ranked by Recoverable Money)
                 </h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                  Accounts holding stolen capital at the conclusion of tracing window suitable for immediate lien marking under Section 94 BNSS
+                  Accounts currently holding stolen money, ready for immediate freezing under Section 94 BNSS
                 </p>
               </div>
               <button
@@ -468,10 +468,10 @@ export const InvestigateTab: React.FC<InvestigateTabProps> = ({ initialVictim, o
                   <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Priority Rank</th>
                   <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Account Number</th>
                   <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Bank</th>
-                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>IFSC</th>
-                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Ring Role</th>
-                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Tainted Amount Held</th>
-                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Coverage % of Loss</th>
+                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>IFSC Code</th>
+                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Role in Trail</th>
+                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Recoverable Stolen Funds</th>
+                  <th style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>Share of Stolen Money</th>
                 </tr>
               </thead>
               <tbody>

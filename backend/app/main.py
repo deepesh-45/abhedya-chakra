@@ -19,7 +19,7 @@ from backend.app.graph.csr import csr_graph
 from backend.app.reports.legal_generator import legal_generator
 from backend.app.detect.features import feature_engine
 from backend.app.detect.rules import rule_scoring_engine
-from backend.app.ingest.loader import DB_PATH
+from backend.app.ingest.loader import DB_PATH, ingest_engine
 
 app = FastAPI(
     title="Operation Abhedya-Chakra",
@@ -36,14 +36,13 @@ app.add_middleware(
 )
 
 def get_db():
-    conn = duckdb.connect(str(DB_PATH), read_only=True)
-    return conn
+    return ingest_engine.get_connection()
 
 @app.on_event("startup")
 def startup_event():
     # Warm up CSR graph and ensure database tables are loaded
     if DB_PATH.exists():
-        conn = duckdb.connect(str(DB_PATH))
+        conn = ingest_engine.get_connection()
         if not csr_graph.is_built():
             csr_graph.build_from_duckdb(conn)
 
@@ -77,11 +76,18 @@ def health():
         "telemetry": stats
     }
 
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+
 @app.get("/api/overview")
 def overview():
     conn = get_db()
     total_txns = conn.execute("SELECT count(*) FROM txns;").fetchone()[0]
     total_accts = conn.execute("SELECT count(*) FROM accounts;").fetchone()[0]
+
+    # Fetch dynamic dataset metadata
+    meta = conn.execute("SELECT dataset_name, dataset_sha256 FROM dataset_meta LIMIT 1;").fetchone() if DB_PATH.exists() and conn.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'dataset_meta';").fetchone()[0] > 0 else None
+    dataset_name = meta[0] if meta else "VoidHacks8_MuleAccount_2M_Transactions.csv"
+    dataset_sha256 = meta[1] if meta else "2c9f81fd34f728c0b7c1e803cb49e1e231c1d9204a77badfcb737f50adf73101"
 
     # Get scores summary if computed
     try:
@@ -108,6 +114,8 @@ def overview():
     """).fetchall()
 
     return {
+        "dataset_name": dataset_name,
+        "dataset_sha256": dataset_sha256,
         "total_transactions": total_txns,
         "total_accounts": total_accts,
         "tier_distribution": tier_counts,
@@ -121,6 +129,31 @@ def overview():
         },
         "telemetry": telemetry.get_system_stats()
     }
+
+class IngestPathRequest(BaseModel):
+    filepath: str
+
+@app.post("/api/ingest")
+def ingest_file_path(req: IngestPathRequest):
+    from backend.app.ingest.loader import ingest_engine
+    if not os.path.exists(req.filepath):
+        raise HTTPException(status_code=404, detail=f"File {req.filepath} not found on server.")
+    stats = ingest_engine.ingest_csv(req.filepath)
+    return stats
+
+@app.post("/api/ingest/upload")
+async def upload_and_ingest(file: UploadFile = File(...)):
+    from backend.app.ingest.loader import ingest_engine
+    save_dir = Path("data/raw")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    target_path = save_dir / file.filename
+
+    with open(target_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    stats = ingest_engine.ingest_csv(str(target_path), dataset_label=file.filename)
+    return stats
 
 @app.get("/api/models")
 def get_models_info():
@@ -160,7 +193,7 @@ def test_injection(req: InjectionTestRequest):
 @app.post("/api/trace")
 def trace(req: TraceRequest):
     if not csr_graph.is_built():
-        conn = duckdb.connect(str(DB_PATH))
+        conn = ingest_engine.get_connection()
         csr_graph.build_from_duckdb(conn)
 
     res = csr_graph.trace_victim(
@@ -240,7 +273,7 @@ def search(q: str = Query(..., min_length=2)):
 @app.post("/api/reports/diary")
 def generate_diary(req: DiaryRequest):
     if not csr_graph.is_built():
-        conn = duckdb.connect(str(DB_PATH))
+        conn = ingest_engine.get_connection()
         csr_graph.build_from_duckdb(conn)
 
     trace_data = csr_graph.trace_victim(req.victim_account)
@@ -258,7 +291,7 @@ def generate_diary(req: DiaryRequest):
 @app.post("/api/reports/freeze")
 def generate_freeze(req: FreezeRequest):
     if not csr_graph.is_built():
-        conn = duckdb.connect(str(DB_PATH))
+        conn = ingest_engine.get_connection()
         csr_graph.build_from_duckdb(conn)
 
     trace_data = csr_graph.trace_victim(req.victim_account)

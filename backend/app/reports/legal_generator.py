@@ -133,19 +133,25 @@ class LegalReportGenerator:
         """
         Generate formal statutory Bank Freezing Notice (Section 94/106 BNSS 2023).
         """
+        all_recs = trace_data.get("freeze_recommendations", [])
+        if not all_recs:
+            return {"error": "No recoverable accounts identified for freezing in this money trail."}
+
+        bank_freezes = [f for f in all_recs if f.get("bank") == target_bank]
+        if not bank_freezes:
+            # Fallback to the bank holding the highest recoverable amount
+            bank_amounts = {}
+            for f in all_recs:
+                b = f.get("bank", "UNKNOWN")
+                bank_amounts[b] = bank_amounts.get(b, 0.0) + f.get("held_inr", 0.0)
+            target_bank = max(bank_amounts, key=bank_amounts.get)
+            bank_freezes = [f for f in all_recs if f.get("bank") == target_bank]
+
         bank_info = self.banks_map.get(target_bank, {
             "name": f"{target_bank} Bank",
             "nodal_email": f"nodal.{target_bank.lower()}@bank.co.in",
             "nodal_desk": "Nodal Cyber Crime Cell Liaison Desk"
         })
-
-        bank_freezes = [
-            f for f in trace_data.get("freeze_recommendations", [])
-            if f.get("bank") == target_bank
-        ]
-
-        if not bank_freezes:
-            return {"error": f"No recoverable accounts identified for bank {target_bank}."}
 
         total_lien_inr = sum(f["held_inr"] for f in bank_freezes)
         date_str = datetime.datetime.now().strftime("%d-%B-%Y")

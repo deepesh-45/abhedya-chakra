@@ -11,7 +11,7 @@ export const App: React.FC = () => {
   const [selectedVictim, setSelectedVictim] = useState<string>('AIRP10000024');
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
 
-  useEffect(() => {
+  const loadOverview = () => {
     fetch('http://127.0.0.1:8000/api/overview')
       .then(res => res.json())
       .then(data => {
@@ -21,6 +21,10 @@ export const App: React.FC = () => {
         }
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    loadOverview();
   }, []);
 
   const handleSelectVictim = (victim: string) => {
@@ -39,6 +43,9 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         telemetry={overviewData?.telemetry || null}
+        datasetName={overviewData?.dataset_name}
+        totalTransactions={overviewData?.total_transactions}
+        onDatasetReload={loadOverview}
       />
 
       <main style={{ flex: 1 }}>
