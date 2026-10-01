@@ -22,7 +22,7 @@ from backend.app.detect.rules import rule_scoring_engine
 from backend.app.ingest.loader import DB_PATH, ingest_engine
 
 app = FastAPI(
-    title="Operation Abhedya-Chakra",
+    title="Operation Vajra",
     description="Offline Mule-Ring Detection & Case Generation Engine for Law Enforcement",
     version="1.0.0"
 )
@@ -299,6 +299,25 @@ def generate_freeze(req: FreezeRequest):
         raise HTTPException(status_code=404, detail=trace_data["error"])
 
     notice = legal_generator.generate_bank_freeze_notice(
+        trace_data=trace_data,
+        target_bank=req.target_bank,
+        case_ref=req.case_ref
+    )
+    if "error" in notice:
+        raise HTTPException(status_code=400, detail=notice["error"])
+    return notice
+
+@app.post("/api/reports/freeze-hindi")
+def generate_freeze_hindi(req: FreezeRequest):
+    if not csr_graph.is_built():
+        conn = ingest_engine.get_connection()
+        csr_graph.build_from_duckdb(conn)
+
+    trace_data = csr_graph.trace_victim(req.victim_account)
+    if "error" in trace_data:
+        raise HTTPException(status_code=404, detail=trace_data["error"])
+
+    notice = legal_generator.generate_hindi_freeze_notice(
         trace_data=trace_data,
         target_bank=req.target_bank,
         case_ref=req.case_ref

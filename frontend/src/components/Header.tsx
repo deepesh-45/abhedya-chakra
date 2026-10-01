@@ -108,12 +108,12 @@ export const Header: React.FC<HeaderProps> = ({
             fontSize: '18px',
             boxShadow: '0 2px 4px rgba(30, 64, 175, 0.2)'
           }}>
-            अ
+            व
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>
-                Operation Abhedya-Chakra
+                Operation Vajra
               </h1>
               <span style={{
                 backgroundColor: 'var(--primary-light)',
@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Offline Mule-Ring Detection, Money Trail Tracing & Legal Case Notice Generator
+              Offline Money Mule Detection, Money Trail Tracing & Legal Case Notice Generator
             </p>
           </div>
         </div>

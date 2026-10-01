@@ -6,7 +6,7 @@ interface LegalReportsTabProps {
 }
 
 export const LegalReportsTab: React.FC<LegalReportsTabProps> = ({ victimAccount }) => {
-  const [docType, setDocType] = useState<'diary' | 'freeze'>('diary');
+  const [docType, setDocType] = useState<'diary' | 'freeze' | 'freeze_hi'>('diary');
   const [targetBank, setTargetBank] = useState<string>('AXIS');
   const [reportData, setReportData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,8 +25,16 @@ export const LegalReportsTab: React.FC<LegalReportsTabProps> = ({ victimAccount 
         });
         const data = await resp.json();
         setReportData(data);
-      } else {
+      } else if (docType === 'freeze') {
         const resp = await fetch('http://127.0.0.1:8000/api/reports/freeze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ victim_account: victimAccount, target_bank: targetBank })
+        });
+        const data = await resp.json();
+        setReportData(data);
+      } else {
+        const resp = await fetch('http://127.0.0.1:8000/api/reports/freeze-hindi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ victim_account: victimAccount, target_bank: targetBank })
@@ -69,7 +77,7 @@ export const LegalReportsTab: React.FC<LegalReportsTabProps> = ({ victimAccount 
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             onClick={() => setDocType('diary')}
             style={{
@@ -103,10 +111,28 @@ export const LegalReportsTab: React.FC<LegalReportsTabProps> = ({ victimAccount 
             }}
           >
             <Building2 size={16} />
-            <span>Bank Freeze Requisition (Sec 94 BNSS)</span>
+            <span>Bank Freeze Notice (English)</span>
           </button>
 
-          {docType === 'freeze' && (
+          <button
+            onClick={() => setDocType('freeze_hi')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              backgroundColor: docType === 'freeze_hi' ? 'var(--primary)' : 'var(--surface-2)',
+              color: docType === 'freeze_hi' ? '#FFFFFF' : 'var(--text)',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Building2 size={16} />
+            <span>बैंक फ्रीज आदेश (हिन्दी)</span>
+          </button>
+
+          {docType !== 'diary' && (
             <select
               value={targetBank}
               onChange={e => setTargetBank(e.target.value)}
@@ -124,6 +150,8 @@ export const LegalReportsTab: React.FC<LegalReportsTabProps> = ({ victimAccount 
               <option value="KKBK">Kotak Mahindra Bank</option>
               <option value="SBIN">State Bank of India</option>
               <option value="ICIC">ICICI Bank</option>
+              <option value="PUNB">Punjab National Bank</option>
+              <option value="BARB">Bank of Baroda</option>
               <option value="IPOS">India Post Payments Bank</option>
             </select>
           )}

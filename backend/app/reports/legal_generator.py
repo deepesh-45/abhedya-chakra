@@ -103,7 +103,7 @@ class LegalReportGenerator:
 
         lines.append("\n" + "=" * 80)
         lines.append("ELECTRONIC EVIDENCE INTEGRITY CERTIFICATE (SEC. 63 BSA / SEC. 65B IEA)")
-        lines.append("This document was generated automatically by Operation Abhedya-Chakra analytics workbench.")
+        lines.append("This document was generated automatically by Operation Vajra analytics workbench.")
         raw_text = "\n".join(lines)
 
         # Verification check against database truth
@@ -195,6 +195,90 @@ class LegalReportGenerator:
         lines.append("\nISSUED UNDER SEAL OF:")
         lines.append("Investigating Officer, Cyber Crime Branch")
         lines.append("Police Commissionerate, Indore (Madhya Pradesh)")
+
+        raw_text = "\n".join(lines)
+        verif_result = anti_hallucination_verifier.verify_document(raw_text, trace_data)
+        doc_hash = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+
+        return {
+            "bank": target_bank,
+            "bank_name": bank_info["name"],
+            "accounts_count": len(bank_freezes),
+            "total_lien_inr": total_lien_inr,
+            "raw_text": raw_text,
+            "sha256": doc_hash,
+            "verification": verif_result
+        }
+
+    def generate_hindi_freeze_notice(
+        self,
+        trace_data: Dict[str, Any],
+        target_bank: str,
+        case_ref: str = "CYBER/IND/2026/0891"
+    ) -> Dict[str, Any]:
+        """
+        Generate statutory Bank Freezing Notice in Hindi (धारा 94 एवं 106 बीएनएसएस, 2023).
+        """
+        all_recs = trace_data.get("freeze_recommendations", [])
+        if not all_recs:
+            return {"error": "No recoverable accounts identified for freezing in this money trail."}
+
+        bank_freezes = [f for f in all_recs if f.get("bank") == target_bank]
+        if not bank_freezes:
+            bank_amounts = {}
+            for f in all_recs:
+                b = f.get("bank", "UNKNOWN")
+                bank_amounts[b] = bank_amounts.get(b, 0.0) + f.get("held_inr", 0.0)
+            target_bank = max(bank_amounts, key=bank_amounts.get)
+            bank_freezes = [f for f in all_recs if f.get("bank") == target_bank]
+
+        bank_info = self.banks_map.get(target_bank, {
+            "name": f"{target_bank} Bank",
+            "nodal_email": f"nodal.{target_bank.lower()}@bank.co.in",
+            "nodal_desk": "Nodal Cyber Crime Cell Liaison Desk"
+        })
+
+        total_lien_inr = sum(f["held_inr"] for f in bank_freezes)
+        date_str = datetime.datetime.now().strftime("%d-%m-%Y")
+
+        lines = []
+        lines.append("वैधानिक अधियाचन एवं बैंक खाता डेबिट फ्रीज आदेश")
+        lines.append("भारतीय नागरिक सुरक्षा संहिता, 2023 (BNSS) की धारा 94 एवं धारा 106 के अंतर्गत")
+        lines.append("(पूर्ववर्ती दंड प्रक्रिया संहिता, 1973 की धारा 91 एवं धारा 102 के समतुल्य)")
+        lines.append("=" * 80)
+        lines.append(f"ज्ञापन क्रमांक: IND/CYBER/{case_ref}/{target_bank}                 दिनांक: {date_str}")
+        lines.append(f"\nप्रति:")
+        lines.append(f"  नोडल अधिकारी / साइबर क्राइम सेल डेस्क,")
+        lines.append(f"  {bank_info['name']},")
+        lines.append(f"  ईमेल: {bank_info['nodal_email']}")
+        lines.append(f"\nविषय: साइबर वित्तीय धोखाधड़ी के लाभार्थी खातों में राशि तत्काल डेबिट फ्रीज / लियन दर्ज करने बाबत।")
+        lines.append(f"संदर्भ: साइबर अपराध शिकायत क्रमांक: {case_ref}")
+        lines.append("-" * 80)
+        lines.append("महोदय/महोदया,\n")
+        lines.append(
+            f"उपरोक्त विषयांतर्गत लेख है कि राज्य साइबर पुलिस थाना, कमिश्नरेट इंदौर में एक संगठित साइबर ठगी की विवेचना की जा रही है, "
+            f"जिसमें पीड़ित खाता {trace_data['victim_account']} से कुल ₹{trace_data['initial_loss_inr']:,.2f} की धोखाधड़ी की गई है। "
+            f"तकनीकी व डिजिटल फॉरेन्सिक विश्लेषण के आधार पर पाया गया है कि ठगी की उक्त अवैध राशि आपके बैंक की निम्नलिखित शाखाओं व खातों में अंतरित हुई है:"
+        )
+
+        lines.append("\nसंलग्नक-क: तत्काल डेबिट फ्रीज / लियन दर्ज किए जाने वाले बैंक खाते:")
+        lines.append(f"{'क्र':<4} | {'खाता संख्या':<16} | {'आईएफएससी (IFSC)':<14} | {'लियन राशि (रुपये)':<20} | {'भूमिका':<14}")
+        lines.append("-" * 75)
+        for idx, f in enumerate(bank_freezes, 1):
+            role_hi = "प्राथमिक रिसीवर" if "Collector" in f['layer'] else ("वितरक / स्प्लिटर" if "Distributor" in f['layer'] else "अंतिम खाता")
+            lines.append(f"{idx:<4} | {f['acct_no']:<16} | {f['ifsc']:<14} | ₹{f['held_inr']:<19,.2f} | {role_hi:<14}")
+        lines.append("-" * 75)
+        lines.append(f"कुल लियन दर्ज की जाने वाली राशि: ₹{total_lien_inr:,.2f}")
+
+        lines.append("\nअनिवार्य अनुपालन निर्देश:")
+        lines.append("1. उपरोक्तानुसार उल्लेखित राशि के समतुल्य खाते पर तत्काल प्रभाव से डेबिट लियन / रोक लगाई जाए।")
+        lines.append("2. संबंधित खाताधारक के पूर्ण केवाईसी (KYC), खाता खोलने का फॉर्म, आधार, पैन एवं पंजीकृत मोबाइल नंबर उपलब्ध कराएं।")
+        lines.append("3. खाता खोले जाने से अद्यतन तक का संपूर्ण बैंक खाता विवरण (Statement) एक्सेल/पीडीएफ में तत्काल प्रेषित करें।")
+        lines.append("4. इस नोटिस की प्राप्ति के 2 घंटे के भीतर अनुपालन रिपोर्ट अधिकृत ईमेल पर प्रेषित करना सुनिश्चित करें।")
+
+        lines.append("\nहस्ताक्षर एवं पदमुद्रा:")
+        lines.append("विवेचना अधिकारी, साइबर अपराध शाखा")
+        lines.append("पुलिस कमिश्नरेट, इंदौर (मध्य प्रदेश)")
 
         raw_text = "\n".join(lines)
         verif_result = anti_hallucination_verifier.verify_document(raw_text, trace_data)

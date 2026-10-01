@@ -41,34 +41,34 @@ export const BenchmarkTab: React.FC = () => {
 
   const benchmarks = [
     {
-      metric: 'Ingestion & Normalisation Benchmark',
+      metric: 'File Loading Speed (2 Million Records)',
       target: '≤ 60.00 seconds',
       actual: '2.72 seconds',
-      speed: '734,815 rows/second',
+      speed: '734,815 rows/second processed',
       status: 'EXCEEDED (22x Faster)',
       passed: true
     },
     {
-      metric: 'Peak Process Memory Usage',
+      metric: 'Computer Memory Used (RAM)',
       target: '≤ 4,000 MB (4 GB)',
       actual: '1,189.86 MB (1.19 GB)',
-      speed: 'Zero-copy columnar buffers',
-      status: 'PASSED (3.3x Below Ceiling)',
+      speed: 'Extremely lightweight, runs on basic laptops',
+      status: 'PASSED (3.3x Below Limit)',
       passed: true
     },
     {
-      metric: '4-Hop Multi-Hop Money Trace Latency',
+      metric: 'Money Trail Tracing Speed (4 Hops)',
       target: '≤ 2.00 seconds (2,000 ms)',
       actual: '0.54 milliseconds',
-      speed: 'Compressed Sparse Row (CSR) BFS',
+      speed: 'Instant graph search across full network',
       status: 'EXCEEDED (3,700x Faster)',
       passed: true
     },
     {
-      metric: 'Zero Cloud Compute Reliance',
-      target: '100% Offline Execution',
+      metric: 'Internet / Cloud Dependency',
+      target: '100% Offline (No Internet)',
       actual: '100% Air-Gapped',
-      speed: 'DuckDB + NumPy CSR Localhost',
+      speed: 'Fully secure, no data ever leaves the laptop',
       status: 'VERIFIED',
       passed: true
     }
@@ -78,10 +78,10 @@ export const BenchmarkTab: React.FC = () => {
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div>
         <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>
-          Engineering Rigor, Scientific Foundations & Benchmarks
+          System Speed, Accuracy & Private Offline Operation
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          Real-time measurement against Indore Police Commissionerate / VoidHacks 8.0 Non-Functional Requirements
+          Live measurements proving speed, privacy, and memory efficiency on standard police laptops
         </p>
       </div>
 
@@ -133,7 +133,7 @@ export const BenchmarkTab: React.FC = () => {
         ))}
       </div>
 
-      {/* Interactive Prompt-Injection Demo & Guardrail Tester (FR-D10) */}
+      {/* Interactive Deceptive Remark Filter Tester */}
       <div style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '10px',
@@ -146,10 +146,10 @@ export const BenchmarkTab: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
-              Live Adversarial Prompt-Injection Defense Test (FR-D10)
+              Interactive Scam Remark Filter Test
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-              Test how planted criminal narrations attempting to manipulate AI case generation are intercepted & neutralized
+              Test how deceptive text planted in transaction remarks (e.g. attempting to mislead police case generation) is caught & cleaned
             </p>
           </div>
           <span style={{
@@ -165,7 +165,7 @@ export const BenchmarkTab: React.FC = () => {
             border: '1px solid var(--success-border)'
           }}>
             <ShieldCheck size={14} />
-            Model M2 Active
+            Smart Filter Active
           </span>
         </div>
 
@@ -199,7 +199,7 @@ export const BenchmarkTab: React.FC = () => {
             }}
           >
             <Send size={14} />
-            <span>{testingInjection ? 'Evaluating...' : 'Test Injection Attack'}</span>
+            <span>{testingInjection ? 'Checking...' : 'Check Remark'}</span>
           </button>
         </div>
 
@@ -220,15 +220,15 @@ export const BenchmarkTab: React.FC = () => {
                 <ShieldCheck size={18} color="var(--success)" />
               )}
               <strong style={{ fontSize: '13px', color: injectionResult.is_adversarial ? 'var(--danger)' : 'var(--success)' }}>
-                {injectionResult.is_adversarial ? 'ADVERSARIAL ATTACK INTERCEPTED & NEUTRALIZED' : 'SAFE TRANSACTION REMARK'}
+                {injectionResult.is_adversarial ? 'DECEPTIVE REMARK INTERCEPTED & NEUTRALIZED' : 'SAFE TRANSACTION REMARK'}
               </strong>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text)' }}>
-              <strong>Classification:</strong> {injectionResult.class} · <strong>Sanitized Output:</strong> <code style={{ fontFamily: 'var(--font-mono)', padding: '2px 4px', backgroundColor: '#FFFFFF', borderRadius: '4px' }}>{injectionResult.sanitized_text}</code>
+              <strong>Category:</strong> {injectionResult.class} · <strong>Safe Cleaned Text:</strong> <code style={{ fontFamily: 'var(--font-mono)', padding: '2px 4px', backgroundColor: '#FFFFFF', borderRadius: '4px' }}>{injectionResult.sanitized_text}</code>
             </div>
             {injectionResult.reason && (
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                <strong>Neutralization Rationale:</strong> {injectionResult.reason}
+                <strong>Why Action Taken:</strong> {injectionResult.reason}
               </div>
             )}
           </div>
@@ -248,7 +248,7 @@ export const BenchmarkTab: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <BookOpen size={16} color="var(--primary)" />
           <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
-            Scientific Research Papers Fortifying Abhedya-Chakra
+            Scientific Research Papers Fortifying Operation Vajra
           </h3>
         </div>
 
